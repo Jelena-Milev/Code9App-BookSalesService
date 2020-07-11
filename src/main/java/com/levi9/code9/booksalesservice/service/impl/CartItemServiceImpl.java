@@ -2,6 +2,7 @@ package com.levi9.code9.booksalesservice.service.impl;
 
 import com.levi9.code9.booksalesservice.dto.AddedCartItemDto;
 import com.levi9.code9.booksalesservice.dto.BookDto;
+import com.levi9.code9.booksalesservice.dto.CartItemInfoDto;
 import com.levi9.code9.booksalesservice.mapper.BookMapper;
 import com.levi9.code9.booksalesservice.mapper.CartItemMapper;
 import com.levi9.code9.booksalesservice.model.BookEntity;
@@ -10,6 +11,9 @@ import com.levi9.code9.booksalesservice.repository.CartItemRepository;
 import com.levi9.code9.booksalesservice.service.CartItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class CartItemServiceImpl implements CartItemService {
@@ -26,7 +30,7 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
-    public AddedCartItemDto add(BookDto bookDto, Long quantity) {
+    public AddedCartItemDto add(BookDto bookDto, Long quantity, Long userId) {
         //treba da proverim da li je na prodaju i da li je ima na stanju bar koliko je qunatity
         if(!bookDto.isOnStock()){
             //throw exception
@@ -38,11 +42,19 @@ public class CartItemServiceImpl implements CartItemService {
         }
         BookEntity bookEntity = bookMapper.map(bookDto);
         final CartItemEntity.CartItemEntityBuilder cartItemEntity = CartItemEntity.builder();
-        cartItemEntity.userId(3l)
+        cartItemEntity.userId(userId)
                 .book(bookEntity)
                 .quantity(quantity);
         final CartItemEntity cartItemToSave = cartItemEntity.build();
         final CartItemEntity savedCartItem = cartItemRepository.save(cartItemToSave);
         return cartItemMapper.mapToDto(savedCartItem);
+    }
+
+    @Override
+    public List<CartItemInfoDto> getAll(Long userId) {
+        List<CartItemEntity> cartItems = cartItemRepository.findByUserIdEquals(userId);
+        List<CartItemInfoDto> cartItemsDtos = new ArrayList<>(cartItems.size());
+        cartItems.forEach(item -> cartItemsDtos.add(cartItemMapper.mapToInfoDto(item)));
+        return cartItemsDtos;
     }
 }
