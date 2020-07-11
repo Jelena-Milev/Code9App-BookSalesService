@@ -1,8 +1,6 @@
 package com.levi9.code9.booksalesservice.service.impl;
 
-import com.levi9.code9.booksalesservice.dto.AddedCartItemDto;
-import com.levi9.code9.booksalesservice.dto.BookDto;
-import com.levi9.code9.booksalesservice.dto.CartItemInfoDto;
+import com.levi9.code9.booksalesservice.dto.*;
 import com.levi9.code9.booksalesservice.mapper.BookMapper;
 import com.levi9.code9.booksalesservice.mapper.CartItemMapper;
 import com.levi9.code9.booksalesservice.model.BookEntity;
@@ -52,9 +50,41 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     public List<CartItemInfoDto> getAll(Long userId) {
-        List<CartItemEntity> cartItems = cartItemRepository.findByUserIdEquals(userId);
+        List<CartItemEntity> cartItems = cartItemRepository.findByUserId(userId);
         List<CartItemInfoDto> cartItemsDtos = new ArrayList<>(cartItems.size());
         cartItems.forEach(item -> cartItemsDtos.add(cartItemMapper.mapToInfoDto(item)));
         return cartItemsDtos;
+    }
+
+    @Override
+    public List<CartItemInfoDto> deleteAll(Long userId) {
+        List<CartItemEntity> cartItems = cartItemRepository.findByUserId(userId);
+        List<CartItemInfoDto> cartItemsDtos = new ArrayList<>(cartItems.size());
+        for (CartItemEntity cartItem : cartItems) {
+            cartItemsDtos.add(cartItemMapper.mapToInfoDto(cartItem));
+            cartItemRepository.delete(cartItem);
+        }
+        return cartItemsDtos;
+    }
+
+    @Override
+    public CartItemInfoDto delete(Long bookId, Long userId) {
+        final CartItemEntity cartItem = cartItemRepository.findByBookIdAndUserId(bookId, userId);
+        final CartItemInfoDto cartItemInfoDto = cartItemMapper.mapToInfoDto(cartItem);
+        cartItemRepository.delete(cartItem);
+        return cartItemInfoDto;
+    }
+
+    @Override
+    public CartItemInfoDto updateQuantity(BookDto book, CartItemQuantityDto newQuantityDto, Long userId) {
+        if(book.getQuantityOnStock() < newQuantityDto.getNewQuantity()){
+            //throw exception
+            return null;
+        }
+        final CartItemEntity cartItem = cartItemRepository.findByBookIdAndUserId(book.getId(), userId);
+        cartItem.setQuantity(newQuantityDto.getNewQuantity());
+        final CartItemEntity updatedCartItem = cartItemRepository.save(cartItem);
+        final CartItemInfoDto updatedCartItemInfo = cartItemMapper.mapToInfoDto(updatedCartItem);
+        return updatedCartItemInfo;
     }
 }

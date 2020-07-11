@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 @Getter
 @Builder
 public class CartItemInfoDto {
+    private Long id;
     private Long bookId;
     private AuthorDto author;
     private String title;

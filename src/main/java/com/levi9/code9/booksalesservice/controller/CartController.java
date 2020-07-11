@@ -35,22 +35,26 @@ public class CartController {
         final Long bookId = cartItemDto.getBookId();
         final Long quantity = cartItemDto.getQuantity();
         final BookDto bookDto = bookServiceApi.getBook(bookId);
-        AddedCartItemDto savedCartItem = cartItemService.add(bookDto, quantity, 3l);
-        return new ResponseEntity<>(savedCartItem, HttpStatus.OK);
+        final AddedCartItemDto addedItem = cartItemService.add(bookDto, quantity, 3l);
+        return new ResponseEntity<>(addedItem, HttpStatus.OK);
     }
 
     @DeleteMapping(path = "/items", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity deleteAll() {
-        return null;
+        final List<CartItemInfoDto> deletedItems = cartItemService.deleteAll(3l);
+        return new ResponseEntity<>(deletedItems, HttpStatus.OK);
     }
 
-    @DeleteMapping(path = "/items/{id}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity delete(@PathVariable final Long id) {
-        return null;
+    @DeleteMapping(path = "/items/{bookId}", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity delete(@PathVariable final Long bookId) {
+        final CartItemInfoDto deletedItem = cartItemService.delete(bookId, 3l);
+        return new ResponseEntity<>(deletedItem, HttpStatus.OK);
     }
 
-    @PatchMapping(path = "/items/{id}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity updateQuantity(@PathVariable final Long id, @RequestBody final Long newQuantity) {
-        return null;
+    @PatchMapping(path = "/items/{bookId}", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity updateQuantity(@PathVariable final Long bookId, @RequestBody final CartItemQuantityDto newQuantityDto) {
+        final BookDto bookDto = bookServiceApi.getBook(bookId);
+        final CartItemInfoDto updatedItem = cartItemService.updateQuantity(bookDto, newQuantityDto, 3l);
+        return new ResponseEntity<>(updatedItem, HttpStatus.OK);
     }
 }
