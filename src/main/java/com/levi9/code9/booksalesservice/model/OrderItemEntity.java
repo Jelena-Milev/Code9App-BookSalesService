@@ -50,7 +50,7 @@ public class OrderItemEntity {
     }
 
     @ManyToOne()
-    @JoinColumn(name = "order_id", referencedColumnName = "id")
+    @JoinColumn(name = "order_id", referencedColumnName = "id", nullable = true, updatable =true)
     public OrderEntity getOrder() {
         return order;
     }
@@ -72,4 +72,6 @@ public class OrderItemEntity {
     public int hashCode() {
         return 52;
     }
+
+
 }

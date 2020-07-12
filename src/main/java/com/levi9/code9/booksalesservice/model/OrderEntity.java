@@ -49,4 +49,11 @@ public class OrderEntity {
     public void setOrderItems(List<OrderItemEntity> orderItems) {
         this.orderItems = orderItems;
     }
+
+    public OrderEntity(String orderIdentifier, Long userId, LocalDate date, BigDecimal totalPrice) {
+        this.orderIdentifier = orderIdentifier;
+        this.userId = userId;
+        this.date = date;
+        this.totalPrice = totalPrice;
+    }
 }
