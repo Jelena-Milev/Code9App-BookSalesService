@@ -1,6 +1,7 @@
 package com.levi9.code9.booksalesservice.service.impl;
 
 import com.levi9.code9.booksalesservice.controller.BookServiceApi;
+import com.levi9.code9.booksalesservice.dto.bookService.BookCopiesSoldDto;
 import com.levi9.code9.booksalesservice.dto.bookService.BookDto;
 import com.levi9.code9.booksalesservice.dto.cart.CartItemDto;
 import com.levi9.code9.booksalesservice.dto.order.OrderDto;
@@ -15,10 +16,12 @@ import com.levi9.code9.booksalesservice.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -39,42 +42,77 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-//    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public OrderDto save(List<CartItemDto> itemsDtos, Long userId) {
-        OrderEntity order = new OrderEntity();
-        BigDecimal totalPrice = new BigDecimal(0);
-        final List<OrderItemEntity> items = new ArrayList<>(itemsDtos.size());
-        for (CartItemDto itemDto : itemsDtos) {
-            final BookEntity bookEntity = fetchBook(itemDto.getBookId());
-            if(bookEntity == null){
-                //throw exception
-            }
-            final Long quantity = itemDto.getQuantity();
-            OrderItemEntity orderItemEntity = new OrderItemEntity(bookEntity, quantity);
-            items.add(orderItemEntity);
+//    @Transactional
+    public OrderDto save(List<CartItemDto> cartItemsDtos, Long userId) {
+        final OrderEntity savedOrder = createOrder(cartItemsDtos, userId);
+        List<BookCopiesSoldDto> bookCopiesSoldDtos = new ArrayList<>(savedOrder.getOrderItems().size());
+        savedOrder.getOrderItems().forEach(orderItem -> {
+            final Long bookId = orderItem.getBook().getId();
+            final Long quantity = orderItem.getQuantity();
+            bookCopiesSoldDtos.add(new BookCopiesSoldDto(bookId, quantity));
+        });
+        bookServiceApi.updateCopiesSold(bookCopiesSoldDtos);
+        return orderMapper.mapToDto(savedOrder);
+    }
 
-            final Long itemPrice = quantity.longValue()*bookEntity.getPrice().longValue();
-            totalPrice = totalPrice.add(new BigDecimal(itemPrice.longValue()));
-        }
-        order.setOrderIdentifier("ABCDEF123");
-        order.setDate(LocalDate.now());
-        order.setUserId(userId);
-        order.setTotalPrice(totalPrice);
+//    @Transactional
+    public OrderEntity createOrder(List<CartItemDto> cartItemsDtos, Long userId) {
+        final List<OrderItemEntity> orderItems = createOrderItems(cartItemsDtos);
+        final BigDecimal totalPrice = calculateTotalPrice(orderItems);
+        final String orderIdentifier = getOrderIdentifier();
+        OrderEntity order = new OrderEntity(orderIdentifier, userId, LocalDate.now(), totalPrice);
+
         OrderEntity savedOrder = orderRepository.save(order);
 
-        for (OrderItemEntity item : items) {
+        for (OrderItemEntity item : orderItems) {
             item.setOrder(savedOrder);
             orderItemRepository.save(item);
         }
-        savedOrder.setOrderItems(items);
-        savedOrder = orderRepository.save(order);
-        final OrderDto orderDto = orderMapper.mapToDto(savedOrder);
-        return orderDto;
+        savedOrder.setOrderItems(orderItems);
+//        savedOrder = orderRepository.save(order);
+        return savedOrder;
     }
 
-    private BookEntity fetchBook(Long id){
-        final BookDto bookDto = bookServiceApi.getBook(id);
-        final BookEntity bookEntity = bookMapper.map(bookDto);
-        return bookEntity;
+    private String getOrderIdentifier() {
+        UUID uuid = UUID.randomUUID();
+        return uuid.toString();
+    }
+
+    private BigDecimal calculateTotalPrice(List<OrderItemEntity> orderItems) {
+        BigDecimal totalPrice = new BigDecimal(0);
+        for (OrderItemEntity orderItem : orderItems) {
+            final long quantity = orderItem.getQuantity().longValue();
+            final long bookPrice = orderItem.getBook().getPrice().longValue();
+            final Long itemPrice = quantity * bookPrice;
+            totalPrice = totalPrice.add(new BigDecimal(itemPrice.longValue()));
+        }
+        return totalPrice;
+    }
+
+    private List<OrderItemEntity> createOrderItems(List<CartItemDto> itemsDtos) {
+        final List<OrderItemEntity> generatedItems = new ArrayList<>(itemsDtos.size());
+        final List<BookEntity> books = fetchBooks(itemsDtos);
+        books.forEach(book -> {
+            if (book == null) {
+                //uradi nesto;
+            }
+            final CartItemDto itemDto = itemsDtos.stream().filter(item -> item.getBookId() == book.getId()).findFirst().get();
+            if (itemDto.getQuantity() > book.getQuantityOnStock()) {
+                //uradi nesto
+            }
+            final OrderItemEntity itemEntity = new OrderItemEntity(book, itemDto.getQuantity());
+            generatedItems.add(itemEntity);
+        });
+        return generatedItems;
+    }
+
+
+    private List<BookEntity> fetchBooks(List<CartItemDto> itemsDtos) {
+        final List<Long> ids = new ArrayList<>(itemsDtos.size());
+        itemsDtos.forEach(itemDto -> ids.add(itemDto.getBookId()));
+        final List<BookDto> bookDtos = bookServiceApi.getBulkBooks(ids);
+        final List<BookEntity> bookEntities = new ArrayList<>(bookDtos.size());
+        bookDtos.forEach(bookDto -> bookEntities.add(bookMapper.map(bookDto)));
+        return bookEntities;
     }
 }

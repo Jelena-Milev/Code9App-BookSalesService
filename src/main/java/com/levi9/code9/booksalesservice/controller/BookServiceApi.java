@@ -18,6 +18,6 @@ public interface BookServiceApi {
     @GetMapping(value = "/books-management/books/bulk", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
     List<BookDto> getBulkBooks(@RequestBody final List<Long> ids);
 
-    @RequestMapping(method = RequestMethod.PATCH, value = "/books-management/books/{id}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-    BookDto updateCopiesSold(@PathVariable final Long id, @RequestBody final BookCopiesSoldDto copiesSold);
+    @RequestMapping(method = RequestMethod.PATCH, value = "/books-management/books/bulk", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+    List<BookDto> updateCopiesSold(@RequestBody final List<BookCopiesSoldDto> copiesSold);
 }

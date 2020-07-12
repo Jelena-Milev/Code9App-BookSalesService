@@ -8,5 +8,6 @@ import lombok.*;
 @Setter
 @Builder
 public class BookCopiesSoldDto {
+    private Long bookId;
     private Long copiesSold;
 }

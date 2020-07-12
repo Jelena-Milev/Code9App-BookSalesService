@@ -20,7 +20,9 @@ public class BookServiceApiFallback implements BookServiceApi {
     }
 
     @Override
-    public BookDto updateCopiesSold(Long id, BookCopiesSoldDto copiesSold) {
+    public List<BookDto> updateCopiesSold(List<BookCopiesSoldDto> copiesSold) {
         return null;
     }
+
+
 }
