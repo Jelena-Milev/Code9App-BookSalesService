@@ -1,9 +1,12 @@
 package com.levi9.code9.booksalesservice.service.impl;
 
-import com.levi9.code9.booksalesservice.dto.*;
+import com.levi9.code9.booksalesservice.dto.bookService.BookDto;
+import com.levi9.code9.booksalesservice.dto.cart.AddedCartItemDto;
+import com.levi9.code9.booksalesservice.dto.cart.CartItemInfoDto;
+import com.levi9.code9.booksalesservice.dto.cart.CartItemQuantityDto;
 import com.levi9.code9.booksalesservice.mapper.BookMapper;
 import com.levi9.code9.booksalesservice.mapper.CartItemMapper;
-import com.levi9.code9.booksalesservice.model.BookEntity;
+import com.levi9.code9.booksalesservice.model.book.BookEntity;
 import com.levi9.code9.booksalesservice.model.CartItemEntity;
 import com.levi9.code9.booksalesservice.repository.CartItemRepository;
 import com.levi9.code9.booksalesservice.service.CartItemService;

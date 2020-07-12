@@ -1,4 +1,4 @@
-package com.levi9.code9.booksalesservice.dto;
+package com.levi9.code9.booksalesservice.dto.cart;
 
 import lombok.*;
 

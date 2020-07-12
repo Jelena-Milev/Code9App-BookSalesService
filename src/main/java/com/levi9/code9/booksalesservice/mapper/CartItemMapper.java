@@ -1,8 +1,7 @@
 package com.levi9.code9.booksalesservice.mapper;
 
-import com.levi9.code9.booksalesservice.dto.AddedCartItemDto;
-import com.levi9.code9.booksalesservice.dto.CartItemDto;
-import com.levi9.code9.booksalesservice.dto.CartItemInfoDto;
+import com.levi9.code9.booksalesservice.dto.cart.AddedCartItemDto;
+import com.levi9.code9.booksalesservice.dto.cart.CartItemInfoDto;
 import com.levi9.code9.booksalesservice.model.CartItemEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

@@ -1,4 +1,4 @@
-package com.levi9.code9.booksalesservice.model;
+package com.levi9.code9.booksalesservice.model.book;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.util.Objects;
-import java.util.Set;
 
 @NoArgsConstructor
 @AllArgsConstructor

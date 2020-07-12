@@ -1,9 +1,9 @@
 package com.levi9.code9.booksalesservice.service;
 
-import com.levi9.code9.booksalesservice.dto.AddedCartItemDto;
-import com.levi9.code9.booksalesservice.dto.BookDto;
-import com.levi9.code9.booksalesservice.dto.CartItemInfoDto;
-import com.levi9.code9.booksalesservice.dto.CartItemQuantityDto;
+import com.levi9.code9.booksalesservice.dto.cart.AddedCartItemDto;
+import com.levi9.code9.booksalesservice.dto.bookService.BookDto;
+import com.levi9.code9.booksalesservice.dto.cart.CartItemInfoDto;
+import com.levi9.code9.booksalesservice.dto.cart.CartItemQuantityDto;
 
 import java.util.List;
 

@@ -1,7 +1,7 @@
 package com.levi9.code9.booksalesservice.controller;
 
-import com.levi9.code9.booksalesservice.dto.BookCopiesSoldDto;
-import com.levi9.code9.booksalesservice.dto.BookDto;
+import com.levi9.code9.booksalesservice.dto.bookService.BookCopiesSoldDto;
+import com.levi9.code9.booksalesservice.dto.bookService.BookDto;
 
 public class BookServiceApiFallback implements BookServiceApi{
 

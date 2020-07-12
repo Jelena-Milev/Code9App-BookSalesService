@@ -1,5 +1,6 @@
-package com.levi9.code9.booksalesservice.dto;
+package com.levi9.code9.booksalesservice.dto.order;
 
+import com.levi9.code9.booksalesservice.dto.bookService.AuthorDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,7 +12,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Getter
 @Builder
-public class CartItemInfoDto {
+public class OrderItemDto {
     private Long id;
     private Long bookId;
     private AuthorDto author;

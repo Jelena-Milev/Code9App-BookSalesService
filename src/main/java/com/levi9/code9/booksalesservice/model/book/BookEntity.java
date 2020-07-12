@@ -1,4 +1,4 @@
-package com.levi9.code9.booksalesservice.model;
+package com.levi9.code9.booksalesservice.model.book;
 
 import lombok.*;
 

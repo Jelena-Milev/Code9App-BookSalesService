@@ -2,10 +2,9 @@ package com.levi9.code9.booksalesservice.controller;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
-import com.levi9.code9.booksalesservice.dto.BookCopiesSoldDto;
-import com.levi9.code9.booksalesservice.dto.BookDto;
+import com.levi9.code9.booksalesservice.dto.bookService.BookCopiesSoldDto;
+import com.levi9.code9.booksalesservice.dto.bookService.BookDto;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @FeignClient(name = "code9-books-service", fallback = BookServiceApiFallback.class)

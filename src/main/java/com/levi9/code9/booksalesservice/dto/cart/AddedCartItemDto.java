@@ -1,12 +1,9 @@
-package com.levi9.code9.booksalesservice.dto;
+package com.levi9.code9.booksalesservice.dto.cart;
 
-import com.levi9.code9.booksalesservice.model.AuthorEntity;
-import com.levi9.code9.booksalesservice.model.GenreEntity;
+import com.levi9.code9.booksalesservice.model.book.AuthorEntity;
 import lombok.*;
-import org.mapstruct.Mapping;
 
 import java.math.BigDecimal;
-import java.util.Set;
 
 @NoArgsConstructor
 @AllArgsConstructor
