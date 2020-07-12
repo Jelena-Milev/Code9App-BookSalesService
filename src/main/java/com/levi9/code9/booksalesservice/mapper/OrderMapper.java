@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface OrderMapper {
 
+    @Mapping(source = "orderIdentifier", target = "identifier")
     OrderDto mapToDto(OrderEntity orderEntity);
 
     @Mapping(source = "book.id", target = "bookId")

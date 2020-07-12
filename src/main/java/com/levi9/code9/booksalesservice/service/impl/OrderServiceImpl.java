@@ -9,12 +9,11 @@ import com.levi9.code9.booksalesservice.mapper.OrderMapper;
 import com.levi9.code9.booksalesservice.model.OrderEntity;
 import com.levi9.code9.booksalesservice.model.OrderItemEntity;
 import com.levi9.code9.booksalesservice.model.book.BookEntity;
+import com.levi9.code9.booksalesservice.repository.OrderItemsRepository;
 import com.levi9.code9.booksalesservice.repository.OrderRepository;
 import com.levi9.code9.booksalesservice.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,20 +24,22 @@ import java.util.List;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderItemsRepository orderItemRepository;
     private final BookServiceApi bookServiceApi;
     private final BookMapper bookMapper;
     private final OrderMapper orderMapper;
 
     @Autowired
-    public OrderServiceImpl(OrderRepository orderRepository, BookServiceApi bookServiceApi, BookMapper bookMapper, OrderMapper orderMapper) {
+    public OrderServiceImpl(OrderRepository orderRepository, OrderItemsRepository orderItemRepository, BookServiceApi bookServiceApi, BookMapper bookMapper, OrderMapper orderMapper) {
         this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
         this.bookServiceApi = bookServiceApi;
         this.bookMapper = bookMapper;
         this.orderMapper = orderMapper;
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+//    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public OrderDto save(List<CartItemDto> itemsDtos, Long userId) {
         OrderEntity order = new OrderEntity();
         BigDecimal totalPrice = new BigDecimal(0);
@@ -60,8 +61,10 @@ public class OrderServiceImpl implements OrderService {
         order.setUserId(userId);
         order.setTotalPrice(totalPrice);
         OrderEntity savedOrder = orderRepository.save(order);
+
         for (OrderItemEntity item : items) {
             item.setOrder(savedOrder);
+            orderItemRepository.save(item);
         }
         savedOrder.setOrderItems(items);
         savedOrder = orderRepository.save(order);
