@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface OrderService {
 
-    OrderDto save(List<CartItemDto> itemsDtos, Long userId);
+    OrderDto save(List<CartItemDto> itemsDtos, Long userId) throws Exception;
 }

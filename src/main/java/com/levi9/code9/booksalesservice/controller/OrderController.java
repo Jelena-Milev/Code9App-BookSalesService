@@ -28,7 +28,13 @@ public class OrderController {
 
     @PostMapping(path = "", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<OrderDto> save(@RequestBody final List<CartItemDto> items){
-        final OrderDto orderDto = orderService.save(items, 3l);
-        return new ResponseEntity<>(orderDto, HttpStatus.OK);
+        final OrderDto orderDto;
+        try {
+            orderDto = orderService.save(items, 3l);
+            return new ResponseEntity<>(orderDto, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
+        }
     }
 }

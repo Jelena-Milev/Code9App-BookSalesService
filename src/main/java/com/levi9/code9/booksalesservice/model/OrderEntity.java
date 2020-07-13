@@ -56,4 +56,9 @@ public class OrderEntity {
         this.date = date;
         this.totalPrice = totalPrice;
     }
+
+    public void addOrder(OrderItemEntity orderItemEntity){
+        this.orderItems.add(orderItemEntity);
+        orderItemEntity.setOrder(this);
+    }
 }

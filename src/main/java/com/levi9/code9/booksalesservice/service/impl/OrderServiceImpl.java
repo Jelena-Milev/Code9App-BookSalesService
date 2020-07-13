@@ -10,7 +10,6 @@ import com.levi9.code9.booksalesservice.mapper.OrderMapper;
 import com.levi9.code9.booksalesservice.model.OrderEntity;
 import com.levi9.code9.booksalesservice.model.OrderItemEntity;
 import com.levi9.code9.booksalesservice.model.book.BookEntity;
-import com.levi9.code9.booksalesservice.repository.OrderItemsRepository;
 import com.levi9.code9.booksalesservice.repository.OrderRepository;
 import com.levi9.code9.booksalesservice.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,23 +26,21 @@ import java.util.UUID;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
-    private final OrderItemsRepository orderItemRepository;
     private final BookServiceApi bookServiceApi;
     private final BookMapper bookMapper;
     private final OrderMapper orderMapper;
 
     @Autowired
-    public OrderServiceImpl(OrderRepository orderRepository, OrderItemsRepository orderItemRepository, BookServiceApi bookServiceApi, BookMapper bookMapper, OrderMapper orderMapper) {
+    public OrderServiceImpl(OrderRepository orderRepository, BookServiceApi bookServiceApi, BookMapper bookMapper, OrderMapper orderMapper) {
         this.orderRepository = orderRepository;
-        this.orderItemRepository = orderItemRepository;
         this.bookServiceApi = bookServiceApi;
         this.bookMapper = bookMapper;
         this.orderMapper = orderMapper;
     }
 
     @Override
-//    @Transactional
-    public OrderDto save(List<CartItemDto> cartItemsDtos, Long userId) {
+    @Transactional
+    public OrderDto save(List<CartItemDto> cartItemsDtos, Long userId) throws Exception {
         final OrderEntity savedOrder = createOrder(cartItemsDtos, userId);
         List<BookCopiesSoldDto> bookCopiesSoldDtos = new ArrayList<>(savedOrder.getOrderItems().size());
         savedOrder.getOrderItems().forEach(orderItem -> {
@@ -55,21 +52,16 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.mapToDto(savedOrder);
     }
 
-//    @Transactional
-    public OrderEntity createOrder(List<CartItemDto> cartItemsDtos, Long userId) {
+    @Transactional
+    public OrderEntity createOrder(List<CartItemDto> cartItemsDtos, Long userId) throws Exception {
         final List<OrderItemEntity> orderItems = createOrderItems(cartItemsDtos);
         final BigDecimal totalPrice = calculateTotalPrice(orderItems);
         final String orderIdentifier = getOrderIdentifier();
         OrderEntity order = new OrderEntity(orderIdentifier, userId, LocalDate.now(), totalPrice);
-
-        OrderEntity savedOrder = orderRepository.save(order);
-
         for (OrderItemEntity item : orderItems) {
-            item.setOrder(savedOrder);
-            orderItemRepository.save(item);
+            order.addOrder(item);
         }
-        savedOrder.setOrderItems(orderItems);
-//        savedOrder = orderRepository.save(order);
+        OrderEntity savedOrder = orderRepository.save(order);
         return savedOrder;
     }
 
@@ -89,20 +81,21 @@ public class OrderServiceImpl implements OrderService {
         return totalPrice;
     }
 
-    private List<OrderItemEntity> createOrderItems(List<CartItemDto> itemsDtos) {
+    private List<OrderItemEntity> createOrderItems(List<CartItemDto> itemsDtos) throws Exception{
         final List<OrderItemEntity> generatedItems = new ArrayList<>(itemsDtos.size());
         final List<BookEntity> books = fetchBooks(itemsDtos);
-        books.forEach(book -> {
+        for (BookEntity book : books) {
             if (book == null) {
                 //uradi nesto;
             }
             final CartItemDto itemDto = itemsDtos.stream().filter(item -> item.getBookId() == book.getId()).findFirst().get();
             if (itemDto.getQuantity() > book.getQuantityOnStock()) {
                 //uradi nesto
+                throw new Exception("Too much books");
             }
             final OrderItemEntity itemEntity = new OrderItemEntity(book, itemDto.getQuantity());
             generatedItems.add(itemEntity);
-        });
+        }
         return generatedItems;
     }
 
