@@ -57,7 +57,7 @@ public class OrderEntity {
         this.totalPrice = totalPrice;
     }
 
-    public void addOrder(OrderItemEntity orderItemEntity){
+    public void addOrderItem(OrderItemEntity orderItemEntity){
         this.orderItems.add(orderItemEntity);
         orderItemEntity.setOrder(this);
     }

@@ -3,7 +3,6 @@ package com.levi9.code9.booksalesservice.controller;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import com.levi9.code9.booksalesservice.dto.bookService.BookDto;
-import com.levi9.code9.booksalesservice.dto.cart.AddedCartItemDto;
 import com.levi9.code9.booksalesservice.dto.cart.CartItemDto;
 import com.levi9.code9.booksalesservice.dto.cart.CartItemInfoDto;
 import com.levi9.code9.booksalesservice.dto.cart.CartItemQuantityDto;
@@ -35,11 +34,11 @@ public class CartController {
     }
 
     @PostMapping(path = "/items", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<AddedCartItemDto> add(@RequestBody final CartItemDto cartItemDto) {
-        final Long bookId = cartItemDto.getBookId();
-        final Long quantity = cartItemDto.getQuantity();
-        final BookDto bookDto = bookServiceApi.getBook(bookId);
-        final AddedCartItemDto addedItem = cartItemService.add(bookDto, quantity, 3l);
+    public ResponseEntity<CartItemInfoDto> add(@RequestBody final CartItemDto cartItemDto) {
+        if (cartItemDto.getBookId() == null) {
+            //throw exception
+        }
+        final CartItemInfoDto addedItem = cartItemService.add(cartItemDto, 3l);
         return new ResponseEntity<>(addedItem, HttpStatus.OK);
     }
 
@@ -57,8 +56,7 @@ public class CartController {
 
     @PatchMapping(path = "/items/{bookId}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity updateQuantity(@PathVariable final Long bookId, @RequestBody final CartItemQuantityDto newQuantityDto) {
-        final BookDto bookDto = bookServiceApi.getBook(bookId);
-        final CartItemInfoDto updatedItem = cartItemService.updateQuantity(bookDto, newQuantityDto, 3l);
+        final CartItemInfoDto updatedItem = cartItemService.updateQuantity(bookId, newQuantityDto, 3l);
         return new ResponseEntity<>(updatedItem, HttpStatus.OK);
     }
 }

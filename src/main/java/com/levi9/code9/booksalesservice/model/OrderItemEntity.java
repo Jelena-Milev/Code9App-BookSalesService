@@ -1,6 +1,6 @@
 package com.levi9.code9.booksalesservice.model;
 
-import com.levi9.code9.booksalesservice.model.book.BookEntity;
+import com.levi9.code9.booksalesservice.dto.bookService.BookDto;
 import lombok.*;
 
 import javax.persistence.*;
@@ -15,48 +15,26 @@ import java.util.Objects;
 @Table(name = "order_item")
 public class OrderItemEntity {
 
-    private Long id;
-
-    private BookEntity book;
-
-    private Long quantity;
-
-    private OrderEntity order;
-
-    public OrderItemEntity(BookEntity book, Long quantity) {
-        this.book = book;
-        this.quantity = quantity;
-    }
-
     @Id
     @SequenceGenerator(name = "seq_order_item_ids", sequenceName = "seq_order_item_ids", allocationSize = 1, initialValue = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_order_item_ids")
-    public Long getId() {
-        return id;
-    }
+    private Long id;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    private Long bookId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "book_id", referencedColumnName = "id")
-    public BookEntity getBook() {
-        return book;
-    }
-
-    public void setBook(BookEntity book) {
-        this.book = book;
-    }
+    private Long quantity;
 
     @ManyToOne()
-    @JoinColumn(name = "order_id", referencedColumnName = "id", nullable = true, updatable =true)
-    public OrderEntity getOrder() {
-        return order;
-    }
+    @JoinColumn(name = "order_id", referencedColumnName = "id")
+    private OrderEntity order;
 
-    public void setOrder(OrderEntity order) {
-        this.order = order;
+    @Transient
+    private BookDto book;
+
+    public OrderItemEntity(Long bookId, Long quantity, BookDto book) {
+        this.bookId = bookId;
+        this.quantity = quantity;
+        this.book = book;
     }
 
     @Override

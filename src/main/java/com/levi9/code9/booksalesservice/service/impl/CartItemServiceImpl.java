@@ -1,12 +1,11 @@
 package com.levi9.code9.booksalesservice.service.impl;
 
+import com.levi9.code9.booksalesservice.controller.BookServiceApi;
 import com.levi9.code9.booksalesservice.dto.bookService.BookDto;
-import com.levi9.code9.booksalesservice.dto.cart.AddedCartItemDto;
+import com.levi9.code9.booksalesservice.dto.cart.CartItemDto;
 import com.levi9.code9.booksalesservice.dto.cart.CartItemInfoDto;
 import com.levi9.code9.booksalesservice.dto.cart.CartItemQuantityDto;
-import com.levi9.code9.booksalesservice.mapper.BookMapper;
 import com.levi9.code9.booksalesservice.mapper.CartItemMapper;
-import com.levi9.code9.booksalesservice.model.book.BookEntity;
 import com.levi9.code9.booksalesservice.model.CartItemEntity;
 import com.levi9.code9.booksalesservice.repository.CartItemRepository;
 import com.levi9.code9.booksalesservice.service.CartItemService;
@@ -21,65 +20,85 @@ public class CartItemServiceImpl implements CartItemService {
 
     private final CartItemRepository cartItemRepository;
     private final CartItemMapper cartItemMapper;
-    private final BookMapper bookMapper;
+    private final BookServiceApi bookServiceApi;
 
     @Autowired
-    public CartItemServiceImpl(CartItemRepository cartItemRepository, CartItemMapper cartItemMapper, BookMapper bookMapper) {
+    public CartItemServiceImpl(CartItemRepository cartItemRepository, CartItemMapper cartItemMapper, BookServiceApi bookServiceApi) {
         this.cartItemRepository = cartItemRepository;
         this.cartItemMapper = cartItemMapper;
-        this.bookMapper = bookMapper;
+        this.bookServiceApi = bookServiceApi;
     }
 
     @Override
-    public AddedCartItemDto add(BookDto bookDto, Long quantity, Long userId) {
-        //treba da proverim da li je na prodaju i da li je ima na stanju bar koliko je qunatity
-        if(!bookDto.isOnStock()){
+    public CartItemInfoDto add(CartItemDto cartItemDto, Long userId) {
+        final BookDto book = bookServiceApi.getBook(cartItemDto.getBookId());
+        if (!book.isOnStock()) {
             //throw exception
             return null;
         }
-        if(bookDto.getQuantityOnStock() < quantity){
+        if (book.getQuantityOnStock() < cartItemDto.getQuantity()) {
             //throw exception
             return null;
         }
-        BookEntity bookEntity = bookMapper.map(bookDto);
-        final CartItemEntity.CartItemEntityBuilder cartItemEntity = CartItemEntity.builder();
-        cartItemEntity.userId(userId)
-                .book(bookEntity)
-                .quantity(quantity);
-        final CartItemEntity cartItemToSave = cartItemEntity.build();
+        final CartItemEntity cartItemToSave = cartItemMapper.map(cartItemDto);
+        cartItemToSave.setUserId(userId);
         final CartItemEntity savedCartItem = cartItemRepository.save(cartItemToSave);
-        return cartItemMapper.mapToDto(savedCartItem);
+        return cartItemMapper.mapToDto(savedCartItem, book);
     }
 
     @Override
     public List<CartItemInfoDto> getAll(Long userId) {
         List<CartItemEntity> cartItems = cartItemRepository.findByUserId(userId);
+        if(cartItems == null || cartItems.isEmpty()){
+            //vrati da je prazna
+            return null;
+        }
+        final List<BookDto> books = fetchBooks(cartItems);
         List<CartItemInfoDto> cartItemsDtos = new ArrayList<>(cartItems.size());
-        cartItems.forEach(item -> cartItemsDtos.add(cartItemMapper.mapToInfoDto(item)));
+        for (BookDto book : books) {
+            final CartItemEntity cartItem = cartItems.stream().filter(item -> item.getBookId() == book.getId()).findFirst().get();
+            final CartItemInfoDto cartItemInfoDto = cartItemMapper.mapToDto(cartItem, book);
+            cartItemsDtos.add(cartItemInfoDto);
+        }
         return cartItemsDtos;
     }
 
+    private List<BookDto> fetchBooks(List<CartItemEntity> cartItems) {
+        final List<Long> ids = new ArrayList<>(cartItems.size());
+        cartItems.forEach(item -> ids.add(item.getBookId()));
+        final List<BookDto> books = bookServiceApi.getBulkBooks(ids);
+        return books;
+    }
+
+    //
     @Override
     public List<CartItemInfoDto> deleteAll(Long userId) {
         List<CartItemEntity> cartItems = cartItemRepository.findByUserId(userId);
-        List<CartItemInfoDto> cartItemsDtos = new ArrayList<>(cartItems.size());
+        if(cartItems == null || cartItems.isEmpty()){
+            return null;
+        }
+        List<BookDto> books = fetchBooks(cartItems);
+        List<CartItemInfoDto> deletedItemDtos = new ArrayList<>(cartItems.size());
         for (CartItemEntity cartItem : cartItems) {
-            cartItemsDtos.add(cartItemMapper.mapToInfoDto(cartItem));
+            final BookDto book = books.stream().filter(b -> b.getId() == cartItem.getBookId()).findFirst().get();
+            deletedItemDtos.add(cartItemMapper.mapToDto(cartItem, book));
             cartItemRepository.delete(cartItem);
         }
-        return cartItemsDtos;
+        return deletedItemDtos;
     }
 
     @Override
     public CartItemInfoDto delete(Long bookId, Long userId) {
         final CartItemEntity cartItem = cartItemRepository.findByBookIdAndUserId(bookId, userId);
-        final CartItemInfoDto cartItemInfoDto = cartItemMapper.mapToInfoDto(cartItem);
+        final BookDto book = bookServiceApi.getBook(cartItem.getBookId());
+        final CartItemInfoDto cartItemInfoDto = cartItemMapper.mapToDto(cartItem, book);
         cartItemRepository.delete(cartItem);
         return cartItemInfoDto;
     }
 
     @Override
-    public CartItemInfoDto updateQuantity(BookDto book, CartItemQuantityDto newQuantityDto, Long userId) {
+    public CartItemInfoDto updateQuantity(Long bookId, CartItemQuantityDto newQuantityDto, Long userId) {
+        final BookDto book = bookServiceApi.getBook(bookId);
         if(book.getQuantityOnStock() < newQuantityDto.getNewQuantity()){
             //throw exception
             return null;
@@ -87,7 +106,7 @@ public class CartItemServiceImpl implements CartItemService {
         final CartItemEntity cartItem = cartItemRepository.findByBookIdAndUserId(book.getId(), userId);
         cartItem.setQuantity(newQuantityDto.getNewQuantity());
         final CartItemEntity updatedCartItem = cartItemRepository.save(cartItem);
-        final CartItemInfoDto updatedCartItemInfo = cartItemMapper.mapToInfoDto(updatedCartItem);
+        final CartItemInfoDto updatedCartItemInfo = cartItemMapper.mapToDto(updatedCartItem, book);
         return updatedCartItemInfo;
     }
 }
