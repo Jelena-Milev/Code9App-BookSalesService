@@ -40,7 +40,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderDto save(List<Long> cartItemsIds, Long userId) throws Exception {
-        final List<CartItemEntity> cartItemEntities = getCartItems(cartItemsIds);
+        final List<CartItemEntity> cartItemEntities = getCartItems(cartItemsIds, userId);
         final OrderEntity orderToSave = createOrder(cartItemEntities, userId);
         final OrderEntity savedOrder = orderRepository.save(orderToSave);
         updateCopiesSold(savedOrder);
@@ -48,11 +48,14 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.mapToDto(savedOrder);
     }
 
-    private List<CartItemEntity> getCartItems(List<Long> cartItemsIds) {
+    private List<CartItemEntity> getCartItems(List<Long> cartItemsIds, Long userId) throws Exception {
         List<CartItemEntity> cartItemEntities = new ArrayList<>(cartItemsIds.size());
         for (Long cartItemsId : cartItemsIds) {
+            //ova linija ispod moze exception da baci ako ne postoji stavka sa tim id-em
             final CartItemEntity cartItemEntity = cartItemRepository.findById(cartItemsId).get();
-            //ovde moze exception da baci ako ne postoji stavka sa tim id-em
+            if(cartItemEntity.getUserId() != userId){
+                throw new Exception("Wrong user");
+            }
             cartItemEntities.add(cartItemEntity);
         }
         return cartItemEntities;

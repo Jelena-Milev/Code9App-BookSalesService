@@ -9,6 +9,7 @@ import com.levi9.code9.booksalesservice.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,13 +30,14 @@ public class OrderController {
 
     @PostMapping(path = "", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<OrderDto> save(@RequestBody final List<Long> cartItemsIds){
+        final Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         final OrderDto orderDto;
         try {
-            orderDto = orderService.save(cartItemsIds, 3l);
+            orderDto = orderService.save(cartItemsIds, userId);
             return new ResponseEntity<>(orderDto, HttpStatus.OK);
         } catch (Exception e) {
             System.out.println(e.getMessage());
-            return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
+            return new ResponseEntity(e.getMessage(), HttpStatus.PRECONDITION_FAILED);
         }
     }
 }

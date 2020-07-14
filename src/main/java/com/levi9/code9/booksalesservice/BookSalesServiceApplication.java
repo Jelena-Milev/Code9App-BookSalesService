@@ -6,7 +6,7 @@ import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.cloud.openfeign.FeignClient;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackageClasses = SecurityConfiguration.class)
 @EnableEurekaClient
 @EnableFeignClients
 public class BookSalesServiceApplication {

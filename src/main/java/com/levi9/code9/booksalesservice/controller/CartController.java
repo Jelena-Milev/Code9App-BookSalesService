@@ -10,6 +10,7 @@ import com.levi9.code9.booksalesservice.service.CartItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,34 +30,39 @@ public class CartController {
 
     @GetMapping(path = "", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity checkout() {
-        final List<CartItemInfoDto> cartItems = cartItemService.getAll(3l);
+        final Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        final List<CartItemInfoDto> cartItems = cartItemService.getAll(userId);
         return new ResponseEntity<>(cartItems, HttpStatus.OK);
     }
 
     @PostMapping(path = "/items", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<CartItemInfoDto> add(@RequestBody final CartItemDto cartItemDto) {
+        final Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (cartItemDto.getBookId() == null) {
             //throw exception
         }
-        final CartItemInfoDto addedItem = cartItemService.add(cartItemDto, 3l);
+        final CartItemInfoDto addedItem = cartItemService.add(cartItemDto, userId);
         return new ResponseEntity<>(addedItem, HttpStatus.OK);
     }
 
     @DeleteMapping(path = "/items", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity deleteAll() {
-        final List<CartItemInfoDto> deletedItems = cartItemService.deleteAll(3l);
+        final Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        final List<CartItemInfoDto> deletedItems = cartItemService.deleteAll(userId);
         return new ResponseEntity<>(deletedItems, HttpStatus.OK);
     }
 
     @DeleteMapping(path = "/items/{bookId}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity delete(@PathVariable final Long bookId) {
-        final CartItemInfoDto deletedItem = cartItemService.delete(bookId, 3l);
+        final Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        final CartItemInfoDto deletedItem = cartItemService.delete(bookId, userId);
         return new ResponseEntity<>(deletedItem, HttpStatus.OK);
     }
 
     @PatchMapping(path = "/items/{bookId}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity updateQuantity(@PathVariable final Long bookId, @RequestBody final CartItemQuantityDto newQuantityDto) {
-        final CartItemInfoDto updatedItem = cartItemService.updateQuantity(bookId, newQuantityDto, 3l);
+        final Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        final CartItemInfoDto updatedItem = cartItemService.updateQuantity(bookId, newQuantityDto, userId);
         return new ResponseEntity<>(updatedItem, HttpStatus.OK);
     }
 }
