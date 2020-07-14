@@ -1,9 +1,8 @@
 package com.levi9.code9.booksalesservice.service.impl;
 
 import com.levi9.code9.booksalesservice.controller.BookServiceApi;
-import com.levi9.code9.booksalesservice.dto.bookService.BookCopiesSoldDto;
 import com.levi9.code9.booksalesservice.dto.bookService.BookDto;
-import com.levi9.code9.booksalesservice.dto.cart.SavedCartItemDto;
+import com.levi9.code9.booksalesservice.dto.cart.CartItemDto;
 import com.levi9.code9.booksalesservice.dto.order.OrderDto;
 import com.levi9.code9.booksalesservice.mapper.OrderMapper;
 import com.levi9.code9.booksalesservice.model.CartItemEntity;
@@ -60,11 +59,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void updateCopiesSold(OrderEntity savedOrder) {
-        List<BookCopiesSoldDto> bookCopiesSoldDtos = new ArrayList<>(savedOrder.getOrderItems().size());
+        List<CartItemDto> bookCopiesSoldDtos = new ArrayList<>(savedOrder.getOrderItems().size());
         savedOrder.getOrderItems().forEach(orderItem -> {
             final Long bookId = orderItem.getBookId();
             final Long quantity = orderItem.getQuantity();
-            bookCopiesSoldDtos.add(new BookCopiesSoldDto(bookId, quantity));
+            bookCopiesSoldDtos.add(new CartItemDto(bookId, quantity));
         });
         bookServiceApi.updateCopiesSold(bookCopiesSoldDtos);
     }

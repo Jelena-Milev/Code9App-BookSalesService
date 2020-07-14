@@ -2,8 +2,8 @@ package com.levi9.code9.booksalesservice.controller;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
-import com.levi9.code9.booksalesservice.dto.bookService.BookCopiesSoldDto;
 import com.levi9.code9.booksalesservice.dto.bookService.BookDto;
+import com.levi9.code9.booksalesservice.dto.cart.CartItemDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,5 +19,5 @@ public interface BookServiceApi {
     List<BookDto> getBulkBooks(@RequestBody final List<Long> ids);
 
     @RequestMapping(method = RequestMethod.PATCH, value = "/books-management/books/bulk", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-    List<BookDto> updateCopiesSold(@RequestBody final List<BookCopiesSoldDto> copiesSold);
+    List<BookDto> updateCopiesSold(@RequestBody final List<CartItemDto> cartItemsSold);
 }
