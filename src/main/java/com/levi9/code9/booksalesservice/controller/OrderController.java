@@ -3,6 +3,7 @@ package com.levi9.code9.booksalesservice.controller;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import com.levi9.code9.booksalesservice.dto.cart.CartItemDto;
+import com.levi9.code9.booksalesservice.dto.cart.SavedCartItemDto;
 import com.levi9.code9.booksalesservice.dto.order.OrderDto;
 import com.levi9.code9.booksalesservice.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,10 +28,10 @@ public class OrderController {
     }
 
     @PostMapping(path = "", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<OrderDto> save(@RequestBody final List<CartItemDto> items){
+    public ResponseEntity<OrderDto> save(@RequestBody final List<Long> cartItemsIds){
         final OrderDto orderDto;
         try {
-            orderDto = orderService.save(items, 3l);
+            orderDto = orderService.save(cartItemsIds, 3l);
             return new ResponseEntity<>(orderDto, HttpStatus.OK);
         } catch (Exception e) {
             System.out.println(e.getMessage());
