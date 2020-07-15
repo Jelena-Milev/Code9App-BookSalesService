@@ -5,6 +5,9 @@ import com.levi9.code9.booksalesservice.dto.bookService.BookDto;
 import com.levi9.code9.booksalesservice.dto.cart.CartItemDto;
 import com.levi9.code9.booksalesservice.dto.cart.CartItemInfoDto;
 import com.levi9.code9.booksalesservice.dto.cart.CartItemQuantityDto;
+import com.levi9.code9.booksalesservice.exception.BookIsNotForSaleException;
+import com.levi9.code9.booksalesservice.exception.BookQuantityNotOnStockException;
+import com.levi9.code9.booksalesservice.exception.ObjectNotFoundException;
 import com.levi9.code9.booksalesservice.mapper.CartItemMapper;
 import com.levi9.code9.booksalesservice.model.CartItemEntity;
 import com.levi9.code9.booksalesservice.repository.CartItemRepository;
@@ -14,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CartItemServiceImpl implements CartItemService {
@@ -31,16 +35,19 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     public CartItemInfoDto add(CartItemDto cartItemDto, Long userId) {
+        final CartItemEntity cartItemToSave = cartItemMapper.map(cartItemDto);
+
         final BookDto book = bookServiceApi.getBook(cartItemDto.getBookId());
         if (!book.isOnStock()) {
-            //throw exception
-            return null;
+            throw new BookIsNotForSaleException(cartItemDto.getBookId());
         }
         if (book.getQuantityOnStock() < cartItemDto.getQuantity()) {
-            //throw exception
-            return null;
+            throw new BookQuantityNotOnStockException(cartItemDto.getBookId());
         }
-        final CartItemEntity cartItemToSave = cartItemMapper.map(cartItemDto);
+        final Optional<CartItemEntity> cartItem = cartItemRepository.findByBookIdAndUserId(cartItemDto.getBookId(), userId);
+        if(cartItem.isPresent()){
+            return updateExistingCartItemQuantity(book, cartItemDto.getQuantity(), cartItem.get());
+        }
         cartItemToSave.setUserId(userId);
         final CartItemEntity savedCartItem = cartItemRepository.save(cartItemToSave);
         return cartItemMapper.mapToDto(savedCartItem, book);
@@ -49,10 +56,6 @@ public class CartItemServiceImpl implements CartItemService {
     @Override
     public List<CartItemInfoDto> getAll(Long userId) {
         List<CartItemEntity> cartItems = cartItemRepository.findByUserId(userId);
-        if(cartItems == null || cartItems.isEmpty()){
-            //vrati da je prazna
-            return null;
-        }
         final List<BookDto> books = fetchBooks(cartItems);
         List<CartItemInfoDto> cartItemsDtos = new ArrayList<>(cartItems.size());
         for (BookDto book : books) {
@@ -70,13 +73,9 @@ public class CartItemServiceImpl implements CartItemService {
         return books;
     }
 
-    //
     @Override
     public List<CartItemInfoDto> deleteAll(Long userId) {
         List<CartItemEntity> cartItems = cartItemRepository.findByUserId(userId);
-        if(cartItems == null || cartItems.isEmpty()){
-            return null;
-        }
         List<BookDto> books = fetchBooks(cartItems);
         List<CartItemInfoDto> deletedItemDtos = new ArrayList<>(cartItems.size());
         for (CartItemEntity cartItem : cartItems) {
@@ -89,24 +88,40 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     public CartItemInfoDto delete(Long bookId, Long userId) {
-        final CartItemEntity cartItem = cartItemRepository.findByBookIdAndUserId(bookId, userId);
+        final CartItemEntity cartItem = findCartItem(bookId, userId);
         final BookDto book = bookServiceApi.getBook(cartItem.getBookId());
         final CartItemInfoDto cartItemInfoDto = cartItemMapper.mapToDto(cartItem, book);
         cartItemRepository.delete(cartItem);
         return cartItemInfoDto;
     }
 
+    private CartItemEntity findCartItem(Long bookId, Long userId){
+        Optional<CartItemEntity> optionalCartItemEntity = cartItemRepository.findByBookIdAndUserId(bookId, userId);
+        optionalCartItemEntity.orElseThrow(() -> new ObjectNotFoundException("CartItem with book id "+bookId+" not found"));
+        return optionalCartItemEntity.get();
+    }
+
     @Override
     public CartItemInfoDto updateQuantity(Long bookId, CartItemQuantityDto newQuantityDto, Long userId) {
         final BookDto book = bookServiceApi.getBook(bookId);
-        if(book.getQuantityOnStock() < newQuantityDto.getNewQuantity()){
-            //throw exception
-            return null;
+        final Long newQuantity = newQuantityDto.getNewQuantity();
+        final CartItemEntity cartItem = findCartItem(book.getId(), userId);
+
+        if (!book.isOnStock()) {
+            throw new BookIsNotForSaleException(bookId);
         }
-        final CartItemEntity cartItem = cartItemRepository.findByBookIdAndUserId(book.getId(), userId);
-        cartItem.setQuantity(newQuantityDto.getNewQuantity());
+        if (book.getQuantityOnStock() < newQuantity) {
+            throw new BookQuantityNotOnStockException(bookId);
+        }
+        cartItem.setQuantity(newQuantity);
         final CartItemEntity updatedCartItem = cartItemRepository.save(cartItem);
-        final CartItemInfoDto updatedCartItemInfo = cartItemMapper.mapToDto(updatedCartItem, book);
-        return updatedCartItemInfo;
+        return cartItemMapper.mapToDto(updatedCartItem, book);
+    }
+
+    private CartItemInfoDto updateExistingCartItemQuantity(BookDto book, Long newQuantity, CartItemEntity cartItem) {
+        final Long newItemQuantity = newQuantity + cartItem.getQuantity();
+        cartItem.setQuantity(newItemQuantity);
+        final CartItemEntity updatedCartItem = cartItemRepository.save(cartItem);
+        return cartItemMapper.mapToDto(updatedCartItem, book);
     }
 }

@@ -13,6 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
@@ -36,11 +39,8 @@ public class CartController {
     }
 
     @PostMapping(path = "/items", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<CartItemInfoDto> add(@RequestBody final CartItemDto cartItemDto) {
+    public ResponseEntity<CartItemInfoDto> add(@RequestBody final @Valid CartItemDto cartItemDto) {
         final Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (cartItemDto.getBookId() == null) {
-            //throw exception
-        }
         final CartItemInfoDto addedItem = cartItemService.add(cartItemDto, userId);
         return new ResponseEntity<>(addedItem, HttpStatus.OK);
     }
@@ -53,14 +53,14 @@ public class CartController {
     }
 
     @DeleteMapping(path = "/items/{bookId}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity delete(@PathVariable final Long bookId) {
+    public ResponseEntity delete(@PathVariable final @Positive(message = "Book id must be valid") Long bookId) {
         final Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         final CartItemInfoDto deletedItem = cartItemService.delete(bookId, userId);
         return new ResponseEntity<>(deletedItem, HttpStatus.OK);
     }
 
     @PatchMapping(path = "/items/{bookId}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity updateQuantity(@PathVariable final Long bookId, @RequestBody final CartItemQuantityDto newQuantityDto) {
+    public ResponseEntity updateQuantity(@PathVariable final @Positive(message = "Book id must be valid") Long bookId, @RequestBody final CartItemQuantityDto newQuantityDto) {
         final Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         final CartItemInfoDto updatedItem = cartItemService.updateQuantity(bookId, newQuantityDto, userId);
         return new ResponseEntity<>(updatedItem, HttpStatus.OK);
