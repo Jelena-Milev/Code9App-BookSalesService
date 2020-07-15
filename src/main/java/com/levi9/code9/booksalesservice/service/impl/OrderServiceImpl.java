@@ -4,6 +4,9 @@ import com.levi9.code9.booksalesservice.controller.BookServiceApi;
 import com.levi9.code9.booksalesservice.dto.bookService.BookDto;
 import com.levi9.code9.booksalesservice.dto.cart.CartItemDto;
 import com.levi9.code9.booksalesservice.dto.order.OrderDto;
+import com.levi9.code9.booksalesservice.exception.BookIsNotForSaleException;
+import com.levi9.code9.booksalesservice.exception.BookQuantityNotOnStockException;
+import com.levi9.code9.booksalesservice.exception.ObjectNotFoundException;
 import com.levi9.code9.booksalesservice.mapper.OrderMapper;
 import com.levi9.code9.booksalesservice.model.CartItemEntity;
 import com.levi9.code9.booksalesservice.model.OrderEntity;
@@ -19,6 +22,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -39,7 +43,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderDto save(List<Long> cartItemsIds, Long userId) throws Exception {
+    public OrderDto save(List<Long> cartItemsIds, Long userId) {
         final List<CartItemEntity> cartItemEntities = getCartItems(cartItemsIds, userId);
         final OrderEntity orderToSave = createOrder(cartItemEntities, userId);
         final OrderEntity savedOrder = orderRepository.save(orderToSave);
@@ -48,17 +52,39 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.mapToDto(savedOrder);
     }
 
-    private List<CartItemEntity> getCartItems(List<Long> cartItemsIds, Long userId) throws Exception {
+    private List<CartItemEntity> getCartItems(List<Long> cartItemsIds, Long userId) {
         List<CartItemEntity> cartItemEntities = new ArrayList<>(cartItemsIds.size());
-        for (Long cartItemsId : cartItemsIds) {
-            //ova linija ispod moze exception da baci ako ne postoji stavka sa tim id-em
-            final CartItemEntity cartItemEntity = cartItemRepository.findById(cartItemsId).get();
-            if(cartItemEntity.getUserId() != userId){
-                throw new Exception("Wrong user");
-            }
+        for (Long cartItemId : cartItemsIds) {
+            final CartItemEntity cartItemEntity = findCartItemByIdAndUserId(cartItemId, userId);
             cartItemEntities.add(cartItemEntity);
         }
+        if(cartItemEntities == null || cartItemEntities.isEmpty())
+            throw new ObjectNotFoundException("There must be at list one order item");
         return cartItemEntities;
+    }
+
+    private CartItemEntity findCartItemByIdAndUserId(Long id, Long userId){
+        final Optional<CartItemEntity> optionalCartItemEntity = cartItemRepository.findByIdAndUserId(id, userId);
+        optionalCartItemEntity.orElseThrow(() -> new ObjectNotFoundException("Cart item with id "+id+" does not exist"));
+        return optionalCartItemEntity.get();
+    }
+
+    @Transactional
+    public OrderEntity createOrder(List<CartItemEntity> cartItemEntities, Long userId) {
+        final List<OrderItemEntity> orderItems = createOrderItems(cartItemEntities);
+        final BigDecimal totalPrice = calculateTotalPrice(orderItems);
+        final String orderIdentifier = getOrderIdentifier();
+        final OrderEntity order = new OrderEntity(orderIdentifier, userId, LocalDate.now(), totalPrice);
+        for (OrderItemEntity item : orderItems) {
+            order.addOrderItem(item);
+        }
+        return order;
+    }
+
+    private CartItemEntity findCartItemById(Long id){
+        final Optional<CartItemEntity> optionalCartItemEntity = cartItemRepository.findById(id);
+        optionalCartItemEntity.orElseThrow(() -> new ObjectNotFoundException("Cart item with id "+id+" does not exist"));
+        return optionalCartItemEntity.get();
     }
 
     private void updateCopiesSold(OrderEntity savedOrder) {
@@ -71,17 +97,7 @@ public class OrderServiceImpl implements OrderService {
         bookServiceApi.updateCopiesSold(bookCopiesSoldDtos);
     }
 
-    @Transactional
-    public OrderEntity createOrder(List<CartItemEntity> cartItemscartItemEntities, Long userId) throws Exception {
-        final List<OrderItemEntity> orderItems = createOrderItems(cartItemscartItemEntities);
-        final BigDecimal totalPrice = calculateTotalPrice(orderItems);
-        final String orderIdentifier = getOrderIdentifier();
-        OrderEntity order = new OrderEntity(orderIdentifier, userId, LocalDate.now(), totalPrice);
-        for (OrderItemEntity item : orderItems) {
-            order.addOrderItem(item);
-        }
-        return order;
-    }
+
 
     private String getOrderIdentifier() {
         UUID uuid = UUID.randomUUID();
@@ -99,18 +115,16 @@ public class OrderServiceImpl implements OrderService {
         return totalPrice;
     }
 
-    private List<OrderItemEntity> createOrderItems(List<CartItemEntity> cartItemEntities) throws Exception{
+    private List<OrderItemEntity> createOrderItems(List<CartItemEntity> cartItemEntities){
         final List<OrderItemEntity> generatedItems = new ArrayList<>(cartItemEntities.size());
         final List<BookDto> books = fetchBooks(cartItemEntities);
         for (BookDto book : books) {
-            if (book == null) {
-                continue;
-                //uradi nesto;
-            }
             final CartItemEntity cartItem = cartItemEntities.stream().filter(item -> item.getBookId() == book.getId()).findFirst().get();
+            if (!book.isOnStock()) {
+                throw new BookIsNotForSaleException(cartItem.getBookId());
+            }
             if (cartItem.getQuantity() > book.getQuantityOnStock()) {
-                //uradi nesto
-                throw new Exception("Too much books");
+                throw new BookQuantityNotOnStockException(cartItem.getBookId());
             }
             final OrderItemEntity itemEntity = new OrderItemEntity(book.getId(), cartItem.getQuantity(), book);
             generatedItems.add(itemEntity);

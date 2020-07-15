@@ -5,6 +5,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import com.levi9.code9.booksalesservice.dto.cart.CartItemDto;
 import com.levi9.code9.booksalesservice.dto.cart.SavedCartItemDto;
 import com.levi9.code9.booksalesservice.dto.order.OrderDto;
+import com.levi9.code9.booksalesservice.exception.ObjectNotFoundException;
 import com.levi9.code9.booksalesservice.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 @RestController
@@ -29,15 +31,11 @@ public class OrderController {
     }
 
     @PostMapping(path = "", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<OrderDto> save(@RequestBody final List<Long> cartItemsIds){
+    public ResponseEntity<OrderDto> save(@RequestBody final List<Long> cartItemsIds) {
+        if(cartItemsIds == null || cartItemsIds.isEmpty())
+            throw new ObjectNotFoundException("There must be at list one order item");
         final Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        final OrderDto orderDto;
-        try {
-            orderDto = orderService.save(cartItemsIds, userId);
-            return new ResponseEntity<>(orderDto, HttpStatus.OK);
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return new ResponseEntity(e.getMessage(), HttpStatus.PRECONDITION_FAILED);
-        }
+        final OrderDto orderDto = orderService.save(cartItemsIds, userId);
+        return new ResponseEntity(orderDto, HttpStatus.OK);
     }
 }

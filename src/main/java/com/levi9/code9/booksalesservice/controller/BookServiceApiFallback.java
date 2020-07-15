@@ -8,8 +8,6 @@ import java.util.List;
 
 public class BookServiceApiFallback implements BookServiceApi {
 
-    public static final String UNKNOWN = "Unknown";
-
     @Override
     public BookDto getBook(final Long id) {
         throw new OperationNotAvailableException();
@@ -17,12 +15,12 @@ public class BookServiceApiFallback implements BookServiceApi {
 
     @Override
     public List<BookDto> getBulkBooks(List<Long> ids) {
-        return null;
+        throw new OperationNotAvailableException();
     }
 
     @Override
     public List<BookDto> updateCopiesSold(List<CartItemDto> cartItemsSold) {
-        return null;
+        throw new OperationNotAvailableException();
     }
 
 
