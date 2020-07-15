@@ -13,10 +13,14 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
+@EqualsAndHashCode
 @Entity(name = "Order")
 @Table(name = "order_form")
 public class OrderEntity {
 
+    @Id
+    @SequenceGenerator(name="seq_order_ids", sequenceName = "seq_order_ids", allocationSize = 1, initialValue = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_order_ids")
     private Long id;
 
     private String orderIdentifier;
@@ -28,27 +32,8 @@ public class OrderEntity {
 
     private BigDecimal totalPrice;
 
-//    @JoinColumn(name = "order_id")
-    List<OrderItemEntity> orderItems = new ArrayList<>();
-
-    @Id
-    @SequenceGenerator(name="seq_order_ids", sequenceName = "seq_order_ids", allocationSize = 1, initialValue = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_order_ids")
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
     @OneToMany(mappedBy = "order", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    public List<OrderItemEntity> getOrderItems() {
-        return orderItems;
-    }
-
-    public void setOrderItems(List<OrderItemEntity> orderItems) {
-        this.orderItems = orderItems;
-    }
+    List<OrderItemEntity> orderItems = new ArrayList<>();
 
     public OrderEntity(String orderIdentifier, Long userId, LocalDate date, BigDecimal totalPrice) {
         this.orderIdentifier = orderIdentifier;

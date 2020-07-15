@@ -4,13 +4,13 @@ import com.levi9.code9.booksalesservice.dto.bookService.BookDto;
 import lombok.*;
 
 import javax.persistence.*;
-import java.util.Objects;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity(name = "OrderItem")
 @Table(name = "order_item")
 public class OrderItemEntity {
@@ -18,6 +18,7 @@ public class OrderItemEntity {
     @Id
     @SequenceGenerator(name = "seq_order_item_ids", sequenceName = "seq_order_item_ids", allocationSize = 1, initialValue = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_order_item_ids")
+    @EqualsAndHashCode.Include
     private Long id;
 
     private Long bookId;
@@ -26,6 +27,7 @@ public class OrderItemEntity {
 
     @ManyToOne()
     @JoinColumn(name = "order_id", referencedColumnName = "id")
+    @EqualsAndHashCode.Include
     private OrderEntity order;
 
     @Transient
@@ -36,20 +38,4 @@ public class OrderItemEntity {
         this.quantity = quantity;
         this.book = book;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof OrderItemEntity)) return false;
-        OrderItemEntity that = (OrderItemEntity) o;
-        return Objects.equals(id, that.id) &&
-                Objects.equals(order, that.order);
-    }
-
-    @Override
-    public int hashCode() {
-        return 52;
-    }
-
-
 }

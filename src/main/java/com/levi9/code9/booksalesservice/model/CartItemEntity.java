@@ -9,6 +9,7 @@ import javax.persistence.*;
 @Getter
 @Setter
 @Builder
+@EqualsAndHashCode
 @Entity(name = "CartItem")
 @Table(name = "cart_item")
 public class CartItemEntity {
